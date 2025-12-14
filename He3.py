@@ -78,7 +78,7 @@ class Player:
         self.skills=[]; self.unlocked_skills=[]
         
         # NEW: Inventory system - MUST BE BEFORE update_stats()
-        self.coins = 50
+        self.coins = 10000
         self.inventory = []
         self.equipped_items = []
         self.soulbound_items = []
@@ -723,7 +723,7 @@ class Player:
             
             # Store original speed multiplier
             duration = 2.0  # 5 seconds
-            speed_multiplier = 3
+            speed_multiplier = 10
             
             # Apply speed boost
             player.speed = player.base_speed * speed_multiplier
@@ -734,7 +734,7 @@ class Player:
                 dist = random.uniform(0, 25)
                 px = player.x + math.cos(angle) * dist
                 py = player.y + math.sin(angle) * dist
-                game.spawn_particle(px, py, 6, 'cyan', life=0.8)
+                game.spawn_particle(px, py, 6, 'purple', life=0.8)
             
             # Schedule speed reset
             def reset_speed():
@@ -850,8 +850,8 @@ class Player:
             angle_center = math.atan2(target.y - player.y, target.x - player.x)
             
             # Fire slash visual effect - large arc
-            arc_radius = 70
-            num_particles = 80
+            arc_radius = 80
+            num_particles = 40
             arc_width = math.pi / 2
             
             for i in range(num_particles):
@@ -1385,225 +1385,306 @@ class Item:
                               fill='#654321', outline='')
 
     def draw_katana(self, canvas):
-        """Elegant curved katana blade with proper curvature"""
+        """Elegant katana with subtle curvature and proper tip alignment"""
+        import math
+
+        # --- Base positions ---
         offset = 20
         start_x = self.x + math.cos(self.angle) * offset
         start_y = self.y + math.sin(self.angle) * offset
-        
+
         blade_len = self.size * 2.5
         handle_len = self.size * 0.8
-        
+
         blade_end_x = start_x + math.cos(self.angle) * blade_len
         blade_end_y = start_y + math.sin(self.angle) * blade_len
-        
+
         handle_start_x = self.x - math.cos(self.angle) * handle_len
         handle_start_y = self.y - math.sin(self.angle) * handle_len
-        
-        # Handle (wrapped cord)
-        canvas.create_line(handle_start_x, handle_start_y, start_x, start_y,
-                           fill='#1a1a1a', width=7)
-        canvas.create_line(handle_start_x, handle_start_y, start_x, start_y,
-                           fill='#8B0000', width=5)
-        
-        # Add wrap texture
-        for i in range(5):
-            t = i / 5
+
+        # --- Handle (wrapped cord) ---
+        canvas.create_line(
+            handle_start_x, handle_start_y,
+            start_x, start_y,
+            fill='#1a1a1a', width=6
+        )
+        canvas.create_line(
+            handle_start_x, handle_start_y,
+            start_x, start_y,
+            fill='#8B0000', width=4
+        )
+
+        # Handle wrap texture
+        for i in range(6):
+            t = i / 6
             wrap_x = handle_start_x + (start_x - handle_start_x) * t
             wrap_y = handle_start_y + (start_y - handle_start_y) * t
-            canvas.create_oval(wrap_x-2, wrap_y-2, wrap_x+2, wrap_y+2,
-                              fill='#000000', outline='')
-        
-        # Tsuba (guard) - rectangular
-        guard_size = 10
-        perp_angle = self.angle + math.pi/2
+            canvas.create_oval(
+                wrap_x - 2, wrap_y - 2,
+                wrap_x + 2, wrap_y + 2,
+                fill='#000000', outline=''
+            )
+
+        # --- Tsuba (guard) ---
+        guard_size = 5
+        perp = self.angle + math.pi / 2
+
         guard_pts = [
-            start_x + math.cos(perp_angle) * guard_size - math.cos(self.angle) * 2,
-            start_y + math.sin(perp_angle) * guard_size - math.sin(self.angle) * 2,
-            start_x - math.cos(perp_angle) * guard_size - math.cos(self.angle) * 2,
-            start_y - math.sin(perp_angle) * guard_size - math.sin(self.angle) * 2,
-            start_x - math.cos(perp_angle) * guard_size + math.cos(self.angle) * 2,
-            start_y - math.sin(perp_angle) * guard_size + math.sin(self.angle) * 2,
-            start_x + math.cos(perp_angle) * guard_size + math.cos(self.angle) * 2,
-            start_y + math.sin(perp_angle) * guard_size + math.sin(self.angle) * 2,
+            start_x + math.cos(perp) * guard_size - math.cos(self.angle) * 2,
+            start_y + math.sin(perp) * guard_size - math.sin(self.angle) * 2,
+            start_x - math.cos(perp) * guard_size - math.cos(self.angle) * 2,
+            start_y - math.sin(perp) * guard_size - math.sin(self.angle) * 2,
+            start_x - math.cos(perp) * guard_size + math.cos(self.angle) * 2,
+            start_y - math.sin(perp) * guard_size + math.sin(self.angle) * 2,
+            start_x + math.cos(perp) * guard_size + math.cos(self.angle) * 2,
+            start_y + math.sin(perp) * guard_size + math.sin(self.angle) * 2,
         ]
-        canvas.create_polygon(guard_pts, fill='#FFD700', outline='#8B6914', width=2)
-        
-        # Blade with SUBTLE curve (much less than before)
-        curve_offset = 8  # Reduced from 15 to 8 for subtle curve
-        perp_angle = self.angle + math.pi/2
-        mid_x = (start_x + blade_end_x) / 2 + math.cos(perp_angle) * curve_offset
-        mid_y = (start_y + blade_end_y) / 2 + math.sin(perp_angle) * curve_offset
-        
-        # Draw smooth curve using multiple segments
-        segments = 12
+
+        canvas.create_polygon(
+            guard_pts,
+            fill='#D4AF37',
+            outline='#8B6914',
+            width=2
+        )
+
+        # --- Blade curve (subtle sori) ---
+        curve_offset = blade_len * 0.12
+        perp = self.angle - math.pi / 2
+
+        mid_x = (start_x + blade_end_x) / 2 + math.cos(perp) * curve_offset
+        mid_y = (start_y + blade_end_y) / 2 + math.sin(perp) * curve_offset
+
+        # Quadratic Bézier blade
+        segments = 100
         points = []
+
         for i in range(segments + 1):
             t = i / segments
-            # Quadratic bezier curve
-            x = (1-t)**2 * start_x + 2*(1-t)*t * mid_x + t**2 * blade_end_x
-            y = (1-t)**2 * start_y + 2*(1-t)*t * mid_y + t**2 * blade_end_y
+            x = (1 - t)**2 * start_x + 2 * (1 - t) * t * mid_x + t**2 * blade_end_x
+            y = (1 - t)**2 * start_y + 2 * (1 - t) * t * mid_y + t**2 * blade_end_y
             points.extend([x, y])
-        
-        # Blade body
-        canvas.create_line(points, fill='#404040', width=9, smooth=True)
-        canvas.create_line(points, fill='#E8E8E8', width=7, smooth=True)
-        canvas.create_line(points, fill='white', width=2, smooth=True)
-        
-        # Sharp tip
-        tip_len = 12
-        tip_x = blade_end_x + math.cos(self.angle) * tip_len
-        tip_y = blade_end_y + math.sin(self.angle) * tip_len
-        
-        perp = self.angle + math.pi/2
-        tip_width = 4
+
+        # --- Blade body (thin, katana-like) ---
+        canvas.create_line(points, fill='#555555', width=6, smooth=True)   # spine
+        canvas.create_line(points, fill='#E0E0E0', width=4, smooth=True)   # body
+        canvas.create_line(points, fill='white', width=1, smooth=True)    # edge
+
+        # --- Properly aligned tip ---
+        x2, y2 = points[-2], points[-1]
+        x1, y1 = points[-4], points[-3]
+        tangent_angle = math.atan2(y2 - y1, x2 - x1)
+
+        tip_len = 10
+        tip_width = 3
+
+        tip_x = blade_end_x + math.cos(tangent_angle) * tip_len
+        tip_y = blade_end_y + math.sin(tangent_angle) * tip_len
+
+        perp = tangent_angle + math.pi / 2
+
         left_x = blade_end_x + math.cos(perp) * tip_width
         left_y = blade_end_y + math.sin(perp) * tip_width
         right_x = blade_end_x - math.cos(perp) * tip_width
         right_y = blade_end_y - math.sin(perp) * tip_width
-        
-        canvas.create_polygon([tip_x, tip_y, left_x, left_y, right_x, right_y],
-                              fill='#C0C0C0', outline='gray')
+
+        canvas.create_polygon(
+            [tip_x, tip_y, left_x, left_y, right_x, right_y],
+            fill='#E0E0E0',
+            outline='#888888'
+        )
+
 
     def draw_axe(self, canvas):
-        """Viking-style battle axe with cleaner blade"""
-        offset = 15
+        """Double-bit Viking axe with outward-facing blades and clean separation"""
+        import math
+
+        # --- Base setup ---
+        offset = 12
         start_x = self.x + math.cos(self.angle) * offset
         start_y = self.y + math.sin(self.angle) * offset
-        
-        handle_len = self.size * 2.2
-        blade_width = self.size * 1.8
-        
-        handle_end_x = self.x - math.cos(self.angle) * handle_len * 0.4
-        handle_end_y = self.y - math.sin(self.angle) * handle_len * 0.4
-        blade_base_x = start_x + math.cos(self.angle) * 5
-        blade_base_y = start_y + math.sin(self.angle) * 5
-        
-        # Handle with wood grain
-        canvas.create_line(handle_end_x+1, handle_end_y+1, blade_base_x+1, blade_base_y+1,
-                           fill='#2F4F4F', width=9)
-        canvas.create_line(handle_end_x, handle_end_y, blade_base_x, blade_base_y,
-                           fill='#654321', width=8)
-        canvas.create_line(handle_end_x, handle_end_y, blade_base_x, blade_base_y,
-                           fill='#8B4513', width=6)
-        
+
+        handle_len = self.size * 2.6
+        blade_radius = self.size * 0.85
+        blade_depth = self.size * 0.6
+
+        handle_end_x = self.x - math.cos(self.angle) * handle_len * 0.5
+        handle_end_y = self.y - math.sin(self.angle) * handle_len * 0.5
+
+        # Push axe head forward
+        head_offset = self.size * 0.6
+        blade_center_x = start_x + math.cos(self.angle) * head_offset
+        blade_center_y = start_y + math.sin(self.angle) * head_offset
+
+        handle_angle = self.angle
+        perp = handle_angle + math.pi / 2
+
+        # --- Handle ---
+        canvas.create_line(
+            handle_end_x + 1, handle_end_y + 1,
+            blade_center_x - math.cos(self.angle) * 8 + 1,
+            blade_center_y - math.sin(self.angle) * 8 + 1,
+            fill='#2F4F4F', width=9
+        )
+        canvas.create_line(
+            handle_end_x, handle_end_y,
+            blade_center_x - math.cos(self.angle) * 8,
+            blade_center_y - math.sin(self.angle) * 8,
+            fill='#8B4513', width=7
+        )
+        canvas.create_line(
+            handle_end_x, handle_end_y,
+            blade_center_x - math.cos(self.angle) * 8,
+            blade_center_y - math.sin(self.angle) * 8,
+            fill='#A0522D', width=5
+        )
+
         # Pommel
-        canvas.create_oval(handle_end_x-6, handle_end_y-6,
-                           handle_end_x+6, handle_end_y+6,
-                           fill='#CD7F32', outline='#654321', width=2)
-        
-        # Axe head - cleaner crescent blade
-        perp_angle = self.angle + math.pi/2
-        blade_tip_x = blade_base_x + math.cos(self.angle) * blade_width * 0.7
-        blade_tip_y = blade_base_y + math.sin(self.angle) * blade_width * 0.7
-        
-        # Upper arc of blade
-        top_arc_x = blade_base_x + math.cos(perp_angle) * blade_width
-        top_arc_y = blade_base_y + math.sin(perp_angle) * blade_width
-        
-        # Lower arc of blade
-        bot_arc_x = blade_base_x - math.cos(perp_angle) * blade_width * 0.5
-        bot_arc_y = blade_base_y - math.sin(perp_angle) * blade_width * 0.5
-        
-        # Blade polygon (cleaner shape)
-        blade_points = [
-            blade_base_x, blade_base_y,
-            top_arc_x, top_arc_y,
-            blade_tip_x + math.cos(perp_angle) * blade_width * 0.3,
-            blade_tip_y + math.sin(perp_angle) * blade_width * 0.3,
-            blade_tip_x, blade_tip_y,
-            blade_tip_x - math.cos(perp_angle) * blade_width * 0.2,
-            blade_tip_y - math.sin(perp_angle) * blade_width * 0.2,
-            bot_arc_x, bot_arc_y
-        ]
-        
-        # Draw blade with shading
-        canvas.create_polygon(blade_points, fill='#505050', outline='')
-        canvas.create_polygon(blade_points, fill='#C0C0C0', outline='#696969', width=2)
-        
-        # Sharp edge highlight
-        canvas.create_line(top_arc_x, top_arc_y, blade_tip_x, blade_tip_y,
-                           fill='white', width=4)
-        canvas.create_line(top_arc_x, top_arc_y, blade_tip_x, blade_tip_y,
-                           fill='#E0E0E0', width=2)
+        canvas.create_oval(
+            handle_end_x - 6, handle_end_y - 6,
+            handle_end_x + 6, handle_end_y + 6,
+            fill='#CD7F32', outline='#654321', width=2
+        )
+
+        # --- Function to draw one blade ---
+        def draw_blade(left=True):
+            direction = 1 if left else -1
+
+            # Move inner anchor outward so blades don't overlap
+            inner_x = blade_center_x + math.cos(perp) * (self.size * 0.18) * direction
+            inner_y = blade_center_y + math.sin(perp) * (self.size * 0.18) * direction
+
+            # Blade tip outward from handle
+            tip_x = blade_center_x + math.cos(perp) * blade_depth * direction
+            tip_y = blade_center_y + math.sin(perp) * blade_depth * direction
+
+            # Top and bottom points for crescent shape
+            top_x = blade_center_x + math.cos(handle_angle) * blade_radius
+            top_y = blade_center_y + math.sin(handle_angle) * blade_radius
+
+            bot_x = blade_center_x - math.cos(handle_angle) * blade_radius
+            bot_y = blade_center_y - math.sin(handle_angle) * blade_radius
+
+            # Slight curve for bow shape
+            curve = blade_radius * 0.3
+            top_x -= math.cos(perp) * curve * direction
+            top_y -= math.sin(perp) * curve * direction
+            bot_x -= math.cos(perp) * curve * direction
+            bot_y -= math.sin(perp) * curve * direction
+
+            blade_pts = [
+                inner_x, inner_y,
+                top_x, top_y,
+                tip_x + math.cos(handle_angle) * blade_radius * 0.25,
+                tip_y + math.sin(handle_angle) * blade_radius * 0.25,
+                tip_x, tip_y,
+                tip_x - math.cos(handle_angle) * blade_radius * 0.25,
+                tip_y - math.sin(handle_angle) * blade_radius * 0.25,
+                bot_x, bot_y
+            ]
+
+            canvas.create_polygon(
+                blade_pts,
+                fill='#B0B0B0',
+                outline='#555555',
+                width=2
+            )
+
+            # Highlight edge
+            canvas.create_line(
+                top_x, top_y,
+                tip_x, tip_y,
+                fill='white',
+                width=2
+            )
+
+        # --- Draw both blades ---
+        draw_blade(left=True)
+        draw_blade(left=False)
 
     def draw_scythe(self, canvas):
-        """Death's scythe with dramatic curved blade"""
+        """Death's scythe with inward-curving blade"""
+        import math
+
         handle_len = self.size * 3.2
-        blade_len = self.size * 2.0
-        
+        blade_len = self.size * 1.2  # smaller blade
+
+        # Offset forward a bit
         forward_offset = 5
         center_x = self.x + math.cos(self.angle) * forward_offset
         center_y = self.y + math.sin(self.angle) * forward_offset
-        
-        handle_end_x = center_x - math.cos(self.angle) * handle_len * 0.5
-        handle_end_y = center_y - math.sin(self.angle) * handle_len * 0.5
-        blade_base_x = center_x + math.cos(self.angle) * handle_len * 0.5
-        blade_base_y = center_y + math.sin(self.angle) * handle_len * 0.5
-        
-        # Long handle - thinner
-        canvas.create_line(handle_end_x+1, handle_end_y+1, blade_base_x+1, blade_base_y+1,
-                           fill='#2F4F4F', width=6)
-        canvas.create_line(handle_end_x, handle_end_y, blade_base_x, blade_base_y,
-                           fill='#2C1810', width=5)
-        canvas.create_line(handle_end_x, handle_end_y, blade_base_x, blade_base_y,
-                           fill='#3D2817', width=3)
-        
-        # Metal ferrule at blade connection
-        canvas.create_oval(blade_base_x-5, blade_base_y-5, blade_base_x+5, blade_base_y+5,
-                          fill='#404040', outline='#202020', width=2)
-        
-        # Curved blade perpendicular to handle
-        perp_angle = self.angle + math.pi/2
-        
-        # Control points for smooth curve
-        blade_mid_x = blade_base_x + math.cos(perp_angle) * blade_len * 0.5
-        blade_mid_y = blade_base_y + math.sin(perp_angle) * blade_len * 0.5
-        
-        blade_end_x = blade_base_x + math.cos(perp_angle - 0.3) * blade_len
-        blade_end_y = blade_base_y + math.sin(perp_angle - 0.3) * blade_len
-        
-        # Draw curved blade using quadratic bezier approximation
+
+        # Handle positions
+        handle_start_x = center_x - math.cos(self.angle) * handle_len * 0.5
+        handle_start_y = center_y - math.sin(self.angle) * handle_len * 0.5
+        handle_end_x = center_x + math.cos(self.angle) * handle_len * 0.5
+        handle_end_y = center_y + math.sin(self.angle) * handle_len * 0.5
+
+        # Draw handle
+        canvas.create_line(handle_start_x+1, handle_start_y+1, handle_end_x+1, handle_end_y+1, fill='#2F4F4F', width=6)
+        canvas.create_line(handle_start_x, handle_start_y, handle_end_x, handle_end_y, fill='#2C1810', width=5)
+        canvas.create_line(handle_start_x, handle_start_y, handle_end_x, handle_end_y, fill='#3D2817', width=3)
+
+        # Ferrule
+        canvas.create_oval(handle_end_x-5, handle_end_y-5, handle_end_x+5, handle_end_y+5,
+                           fill='#404040', outline='#202020', width=2)
+
+        # --- INWARD CURVE FIX ---
+        perp_angle = self.angle - math.pi / 2  # flipped inward
+
+        # Control point (mid-curve)
+        blade_mid_x = handle_end_x + math.cos(perp_angle) * blade_len * 0.55
+        blade_mid_y = handle_end_y + math.sin(perp_angle) * blade_len * 0.55
+
+        # End point (slightly rotated inward)
+        blade_end_x = handle_end_x + math.cos(perp_angle + 0.25) * blade_len
+        blade_end_y = handle_end_y + math.sin(perp_angle + 0.25) * blade_len
+
+        # Quadratic bezier points
         segments = 15
         blade_points = []
         for i in range(segments + 1):
             t = i / segments
-            # Quadratic bezier
-            x = (1-t)**2 * blade_base_x + 2*(1-t)*t * blade_mid_x + t**2 * blade_end_x
-            y = (1-t)**2 * blade_base_y + 2*(1-t)*t * blade_mid_y + t**2 * blade_end_y
+            x = (1-t)**2 * handle_end_x + 2*(1-t)*t * blade_mid_x + t**2 * blade_end_x
+            y = (1-t)**2 * handle_end_y + 2*(1-t)*t * blade_mid_y + t**2 * blade_end_y
             blade_points.extend([x, y])
-        
-        # Blade with dramatic shading
-        canvas.create_line(blade_points, fill='#202020', width=12, smooth=True)
-        canvas.create_line(blade_points, fill='#606060', width=10, smooth=True)
-        canvas.create_line(blade_points, fill='#A0A0A0', width=8, smooth=True)
-        
-        # Inner sharp edge
+
+        # Blade shading
+        canvas.create_line(blade_points, fill='#202020', width=10, smooth=True)
+        canvas.create_line(blade_points, fill='#606060', width=8, smooth=True)
+        canvas.create_line(blade_points, fill='#A0A0A0', width=6, smooth=True)
+
+        # Inner sharp edge (offset inward)
         inner_points = []
         for i in range(segments + 1):
             t = i / segments
-            x = (1-t)**2 * blade_base_x + 2*(1-t)*t * blade_mid_x + t**2 * blade_end_x
-            y = (1-t)**2 * blade_base_y + 2*(1-t)*t * blade_mid_y + t**2 * blade_end_y
-            # Offset inward
-            perp = math.atan2(blade_end_y - blade_base_y, blade_end_x - blade_base_x) + math.pi/2
-            x -= math.cos(perp) * 3
-            y -= math.sin(perp) * 3
+            x = (1-t)**2 * handle_end_x + 2*(1-t)*t * blade_mid_x + t**2 * blade_end_x
+            y = (1-t)**2 * handle_end_y + 2*(1-t)*t * blade_mid_y + t**2 * blade_end_y
+
+            # perpendicular to blade direction
+            perp = math.atan2(blade_end_y - handle_end_y, blade_end_x - handle_end_x) - math.pi / 2
+            x -= math.cos(perp) * 2
+            y -= math.sin(perp) * 2
+
             inner_points.extend([x, y])
-        
-        canvas.create_line(inner_points, fill='white', width=3, smooth=True)
-        
+
+        canvas.create_line(inner_points, fill='white', width=2, smooth=True)
+
         # Sharp tip
         tip_angle = math.atan2(blade_end_y - blade_mid_y, blade_end_x - blade_mid_x)
-        tip_len = 10
+        tip_len = 6
         tip_x = blade_end_x + math.cos(tip_angle) * tip_len
         tip_y = blade_end_y + math.sin(tip_angle) * tip_len
-        
-        perp_tip = tip_angle + math.pi/2
+        perp_tip = tip_angle - math.pi / 2
+
         tip_pts = [
             tip_x, tip_y,
-            blade_end_x + math.cos(perp_tip) * 5, blade_end_y + math.sin(perp_tip) * 5,
-            blade_end_x - math.cos(perp_tip) * 5, blade_end_y - math.sin(perp_tip) * 5
+            blade_end_x + math.cos(perp_tip) * 3, blade_end_y + math.sin(perp_tip) * 3,
+            blade_end_x - math.cos(perp_tip) * 3, blade_end_y - math.sin(perp_tip) * 3
         ]
+
         canvas.create_polygon(tip_pts, fill='#808080', outline='#606060')
+
+
     def draw_dagger(self, canvas):
         offset = 12  # closer to the body
         start_x = self.x + math.cos(self.angle) * offset
@@ -2087,6 +2168,11 @@ SHOP_ITEMS = [
 # Additional shop items with skills
 # Additional shop items with skills
 SHOP_ITEMS.extend([
+    InventoryItem('Reinforced Bow', 'weapon', 'Uncommon', 
+                 {'strength': 4, 'agility': 4}, 
+                 skills=['Arrow Shot'], 
+                 price=200, 
+                 weapon_type='bow'),
     # Rare weapons with skills
     InventoryItem('Flameblade', 'weapon', 'Rare', 
                  {'strength': 8, 'will': 5}, 
