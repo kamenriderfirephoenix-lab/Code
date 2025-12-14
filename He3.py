@@ -78,7 +78,7 @@ class Player:
         self.skills=[]; self.unlocked_skills=[]
         
         # NEW: Inventory system - MUST BE BEFORE update_stats()
-        self.coins = 10000
+        self.coins = 50
         self.inventory = []
         self.equipped_items = []
         self.soulbound_items = []
@@ -5536,6 +5536,7 @@ class MainApp(tk.Tk):
 if __name__=="__main__":
     app = MainApp()
     app.mainloop()
+
 
 
 
